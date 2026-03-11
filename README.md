@@ -1,7 +1,7 @@
 
-# projeto academico responsavel pelo projeto israel soares da silva academico de ciencias e tecnologia na instituição de ensino  Unifeso 
-# problema ;
-Bibliotecas precisam controlar
+# projeto acadêmico responsável pelo projeto israel soares da silva acadêmico de Ciencias e tecnologia na Instituição de Ensino  Unifeso 
+# problema 
+Bibliotecas precisam ser  controladas 
 
 usuários
 
@@ -15,7 +15,7 @@ multas
 
 Objetivo
 
-Criar um sistema que;
+Criar um sistema que:
 
 cadastre usuários
 
