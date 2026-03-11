@@ -1,0 +1,18 @@
+from fastapi import FastAPI
+from database import Base, engine
+
+from routes.usuario_routes import router as usuario_router
+from routes.livro_routes import router as livro_router
+from routes.emprestimo_routes import router as emprestimo_router
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI()
+
+app.include_router(usuario_router)
+app.include_router(livro_router)
+app.include_router(emprestimo_router)
+
+@app.get("/")
+def home():
+    return {"mensagem": "Sistema Biblioteca API"}

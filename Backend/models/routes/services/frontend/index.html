@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="pt-BR" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema Inteligente de Biblioteca</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:wght@400;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Literata', serif; }
+    
+    body { box-sizing: border-box; }
+    
+    .library-gradient {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e57c2 100%);
+    }
+    
+    .card-book {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border-left: 4px solid #7e57c2;
+    }
+    
+    .card-book:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      border-left-color: #2a5298;
+    }
+    
+    .badge-available {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    .badge-unavailable {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .input-book {
+      border: 2px solid #e5e7eb;
+      transition: all 0.3s ease;
+    }
+    
+    .input-book:focus {
+      border-color: #7e57c2;
+      box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.1);
+      outline: none;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #2a5298 0%, #7e57c2 100%);
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(42, 82, 152, 0.3);
+    }
+    
+    .btn-secondary {
+      background: rgba(126, 87, 194, 0.1);
+      border: 2px solid #7e57c2;
+      color: #7e57c2;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(126, 87, 194, 0.2);
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.4s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .search-highlight {
+      background-color: #fef08a;
+    }
+    
+    .loading-spinner {
+      border: 3px solid rgba(126, 87, 194, 0.2);
+      border-top-color: #7e57c2;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+ </head>
+ <body class="h-full bg-gradient-to-b from-slate-50 to-blue-50">
+  <div class="h-full w-full overflow-auto flex flex-col"><!-- Header -->
+   <header class="library-gradient sticky top-0 z-50 shadow-lg">
+    <div class="max-w-7xl mx-auto px-6 py-6">
+     <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+       <div class="w-12 h-12 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center">
+        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C6.248 6.253 2 7.66 2 9.305v4.236C2 16.34 6.248 17.747 12 17.747c5.752 0 10-1.407 10-3.151V9.305C22 7.66 17.752 6.253 12 6.253z" />
+        </svg>
+       </div>
+       <div>
+        <h1 id="library-name" class="text-2xl font-bold text-white">Biblioteca Inteligente</h1>
+        <p id="welcome-msg" class="text-blue-100 text-sm">Bem-vindo ao nosso acervo</p>
+       </div>
+      </div>
+      <div class="hidden md:flex items-center gap-4">
+       <div class="text-right text-blue-100">
+        <p class="text-sm font-medium">Total de livros</p>
+        <p id="total-books" class="text-2xl font-bold text-white">0</p>
+       </div>
+      </div>
+     </div>
+    </div>
+   </header><!-- Main Content -->
+   <main class="flex-1 max-w-7xl mx-auto w-full px-6 py-8">
+    <div class="grid lg:grid-cols-3 gap-8"><!-- Form Section -->
+     <div class="lg:col-span-1">
+      <div class="bg-white rounded-2xl shadow-lg p-8 sticky top-24">
+       <h2 class="text-2xl font-bold text-slate-800 mb-6">Adicionar Livro</h2>
+       <form id="book-form" class="space-y-4">
+        <div><label class="block text-slate-700 font-semibold mb-2">Título</label> <input type="text" id="book-title" placeholder="Nome do livro" class="input-book w-full px-4 py-3 rounded-lg" required>
+        </div>
+        <div><label class="block text-slate-700 font-semibold mb-2">Autor</label> <input type="text" id="book-author" placeholder="Nome do autor" class="input-book w-full px-4 py-3 rounded-lg" required>
+        </div>
+        <div><label class="block text-slate-700 font-semibold mb-2">ISBN</label> <input type="text" id="book-isbn" placeholder="ISBN do livro" class="input-book w-full px-4 py-3 rounded-lg" required>
+        </div>
+        <div><label class="block text-slate-700 font-semibold mb-2">Categoria</label> <select id="book-category" class="input-book w-full px-4 py-3 rounded-lg" required> <option value="">Selecionar categoria</option> <option value="ficção">Ficção</option> <option value="não-ficção">Não-ficção</option> <option value="romance">Romance</option> <option value="mistério">Mistério</option> <option value="técnico">Técnico</option> <option value="história">História</option> <option value="educação">Educação</option> </select>
+        </div>
+        <div><label class="flex items-center gap-3 cursor-pointer"> <input type="checkbox" id="book-available" checked class="w-5 h-5 rounded"> <span class="text-slate-700 font-semibold">Disponível</span> </label>
+        </div><button type="submit" id="add-btn" class="btn-primary w-full text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
+         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+         </svg> Adicionar </button>
+       </form>
+      </div>
+     </div><!-- Books List Section -->
+     <div class="lg:col-span-2">
+      <div class="bg-white rounded-2xl shadow-lg p-8">
+       <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-800 mb-4">Acervo da Biblioteca</h2>
+        <div class="relative">
+         <svg class="w-5 h-5 absolute left-4 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+         </svg><input type="text" id="search-input" placeholder="Buscar por título, autor ou categoria..." class="input-book w-full pl-12 pr-4 py-3 rounded-lg">
+        </div>
+       </div><!-- Filter Buttons -->
+       <div class="mb-6 flex flex-wrap gap-2"><button class="filter-btn px-4 py-2 rounded-full font-medium transition-all bg-slate-100 text-slate-700" data-filter="all"> Todos </button> <button class="filter-btn px-4 py-2 rounded-full font-medium transition-all hover:bg-slate-100" data-filter="available"> <span class="w-2 h-2 bg-green-500 rounded-full inline-block mr-2"></span>Disponíveis </button> <button class="filter-btn px-4 py-2 rounded-full font-medium transition-all hover:bg-slate-100" data-filter="unavailable"> <span class="w-2 h-2 bg-red-500 rounded-full inline-block mr-2"></span>Indisponíveis </button>
+       </div><!-- Books Grid -->
+       <div id="books-container" class="grid md:grid-cols-2 gap-6 min-h-40">
+        <div class="col-span-2 text-center py-12">
+         <svg class="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C6.248 6.253 2 7.66 2 9.305v4.236C2 16.34 6.248 17.747 12 17.747c5.752 0 10-1.407 10-3.151V9.305C22 7.66 17.752 6.253 12 6.253z" />
+         </svg>
+         <p class="text-slate-500 font-medium">Nenhum livro adicionado ainda. Comece criando seu acervo!</p>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </main><!-- Footer -->
+   <footer class="library-gradient mt-12 py-6 text-center text-blue-100">
+    <p>© 2024 Sistema Inteligente de Biblioteca. Todos os direitos reservados.</p>
+   </footer>
+  </div>
+  <script>
+    let currentBooks = [];
+    let currentFilter = 'all';
+    let currentSearch = '';
+
+    const defaultConfig = {
+      library_name: 'Biblioteca Inteligente',
+      welcome_message: 'Bem-vindo ao nosso acervo'
+    };
+
+    // Initialize Data SDK
+    const dataHandler = {
+      onDataChanged(data) {
+        currentBooks = data;
+        updateBooksDisplay();
+        document.getElementById('total-books').textContent = data.length;
+      }
+    };
+
+    async function initializeApp() {
+      if (window.dataSdk) {
+        const initResult = await window.dataSdk.init(dataHandler);
+        if (!initResult.isOk) {
+          console.error('Erro ao inicializar Data SDK');
+        }
+      }
+
+      // Initialize Element SDK
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange,
+          mapToCapabilities,
+          mapToEditPanelValues
+        });
+      }
+    }
+
+    async function onConfigChange(config) {
+      document.getElementById('library-name').textContent = config.library_name || defaultConfig.library_name;
+      document.getElementById('welcome-msg').textContent = config.welcome_message || defaultConfig.welcome_message;
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ['library_name', config.library_name || defaultConfig.library_name],
+        ['welcome_message', config.welcome_message || defaultConfig.welcome_message]
+      ]);
+    }
+
+    // Add Book
+    document.getElementById('book-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (currentBooks.length >= 999) {
+        alert('Limite de 999 livros atingido. Remova alguns livros antes de adicionar novos.');
+        return;
+      }
+
+      const addBtn = document.getElementById('add-btn');
+      const originalText = addBtn.innerHTML;
+      addBtn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+      addBtn.disabled = true;
+
+      const newBook = {
+        title: document.getElementById('book-title').value,
+        author: document.getElementById('book-author').value,
+        isbn: document.getElementById('book-isbn').value,
+        category: document.getElementById('book-category').value,
+        available: document.getElementById('book-available').checked,
+        date_added: new Date().toISOString()
+      };
+
+      const result = await window.dataSdk.create(newBook);
+
+      addBtn.innerHTML = originalText;
+      addBtn.disabled = false;
+
+      if (result.isOk) {
+        document.getElementById('book-form').reset();
+        document.getElementById('book-available').checked = true;
+      }
+    });
+
+    // Search
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      currentSearch = e.target.value.toLowerCase();
+      updateBooksDisplay();
+    });
+
+    // Filter
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('bg-slate-100', 'text-slate-700'));
+        e.target.classList.add('bg-slate-100', 'text-slate-700');
+        currentFilter = e.target.dataset.filter;
+        updateBooksDisplay();
+      });
+    });
+
+    function updateBooksDisplay() {
+      let filteredBooks = currentBooks;
+
+      // Apply filter
+      if (currentFilter === 'available') {
+        filteredBooks = filteredBooks.filter(b => b.available);
+      } else if (currentFilter === 'unavailable') {
+        filteredBooks = filteredBooks.filter(b => !b.available);
+      }
+
+      // Apply search
+      if (currentSearch) {
+        filteredBooks = filteredBooks.filter(b =>
+          b.title.toLowerCase().includes(currentSearch) ||
+          b.author.toLowerCase().includes(currentSearch) ||
+          b.category.toLowerCase().includes(currentSearch)
+        );
+      }
+
+      const container = document.getElementById('books-container');
+
+      if (filteredBooks.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-2 text-center py-12">
+            <svg class="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <p class="text-slate-500 font-medium">Nenhum livro encontrado</p>
+          </div>
+        `;
+        return;
+      }
+
+      const existingCards = new Map([...container.children].map(el => [el.dataset.bookId, el]));
+
+      filteredBooks.forEach(book => {
+        if (existingCards.has(book.__backendId)) {
+          updateBookCard(existingCards.get(book.__backendId), book);
+          existingCards.delete(book.__backendId);
+        } else {
+          container.appendChild(createBookCard(book));
+        }
+      });
+
+      existingCards.forEach(el => el.remove());
+    }
+
+    function createBookCard(book) {
+      const card = document.createElement('div');
+      card.dataset.bookId = book.__backendId;
+      card.className = 'card-book rounded-xl p-6 fade-in';
+      card.innerHTML = `
+        <div class="flex justify-between items-start mb-4">
+          <div class="flex-1">
+            <h3 class="font-bold text-lg text-slate-800 mb-1">${book.title}</h3>
+            <p class="text-slate-600 text-sm mb-2">${book.author}</p>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">${book.category}</span>
+              <span class="text-xs text-slate-500">ISBN: ${book.isbn}</span>
+            </div>
+          </div>
+          <span class="badge-${book.available ? 'available' : 'unavailable'} text-white text-xs px-3 py-1 rounded-full font-semibold">
+            ${book.available ? '✓ Disponível' : '✗ Indisponível'}
+          </span>
+        </div>
+        <div class="flex gap-2 mt-4">
+          <button class="toggle-btn flex-1 btn-secondary py-2 rounded-lg font-medium text-sm" data-id="${book.__backendId}">
+            ${book.available ? 'Marcar Indisponível' : 'Marcar Disponível'}
+          </button>
+          <button class="delete-btn btn-secondary px-4 py-2 rounded-lg font-medium text-sm" data-id="${book.__backendId}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
+      `;
+
+      card.querySelector('.toggle-btn').addEventListener('click', async () => {
+        await toggleAvailability(book);
+      });
+
+      card.querySelector('.delete-btn').addEventListener('click', async () => {
+        await deleteBook(book);
+      });
+
+      return card;
+    }
+
+    function updateBookCard(card, book) {
+      const title = card.querySelector('h3');
+      const author = card.querySelector('.text-slate-600');
+      const category = card.querySelector('[class*="bg-blue"]');
+      const isbn = card.querySelector('[class*="ISBN"]');
+      const badge = card.querySelector('[class*="badge-"]');
+      const toggleBtn = card.querySelector('.toggle-btn');
+
+      title.textContent = book.title;
+      author.textContent = book.author;
+      category.textContent = book.category;
+      isbn.textContent = `ISBN: ${book.isbn}`;
+
+      badge.className = `badge-${book.available ? 'available' : 'unavailable'} text-white text-xs px-3 py-1 rounded-full font-semibold`;
+      badge.textContent = book.available ? '✓ Disponível' : '✗ Indisponível';
+      toggleBtn.textContent = book.available ? 'Marcar Indisponível' : 'Marcar Disponível';
+    }
+
+    async function toggleAvailability(book) {
+      const updated = { ...book, available: !book.available };
+      const result = await window.dataSdk.update(updated);
+      if (!result.isOk) console.error('Erro ao atualizar disponibilidade');
+    }
+
+    async function deleteBook(book) {
+      const result = await window.dataSdk.delete(book);
+      if (!result.isOk) console.error('Erro ao deletar livro');
+    }
+
+    initializeApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9da7960276183709',t:'MTc3MzIwMDkzMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
