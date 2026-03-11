@@ -1,5 +1,5 @@
 
-# projeto acadêmico responsável pelo projeto israel soares da silva acadêmico de Ciencias e tecnologia na Instituição de Ensino  Unifeso 
+# projeto acadêmico responsável pelo projeto israel soares  acadêmico de Ciencias e tecnologia na Instituição de Ensino  Unifeso 
 # problema 
 Bibliotecas precisam ser  controladas 
 
