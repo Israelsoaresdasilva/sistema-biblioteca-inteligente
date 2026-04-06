@@ -55,3 +55,10 @@ IA
 Scikit-learn
 
 NLP simples
+
+Sistema CRUD + Interface Inteligente
+
+Criar livros
+Ler (listar)
+Atualizar (disponibilidade)
+Deletar

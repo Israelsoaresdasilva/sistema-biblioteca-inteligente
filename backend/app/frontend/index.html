@@ -1,0 +1,606 @@
+
+<!doctype html>
+<html lang="pt-BR" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    html, body { height: 100%; margin: 0; }
+    * { box-sizing: border-box; }
+    .font-display { font-family: 'Playfair Display', Georgia, serif; }
+    .font-body { font-family: 'DM Sans', sans-serif; }
+    .app-wrapper { height: 100%; width: 100%; overflow: auto; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .anim-fade-up { animation: fadeUp 0.5s ease both; }
+    .anim-scale-in { animation: scaleIn 0.4s ease both; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+
+    .book-card {
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      backdrop-filter: blur(10px);
+    }
+    .book-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 25px 50px rgba(139, 92, 246, 0.25);
+      border-color: rgba(139, 92, 246, 0.5);
+    }
+
+    .tab-active {
+      background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+      color: #fff !important;
+    }
+
+    .genre-pill {
+      transition: all 0.2s ease;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    .genre-pill:hover { transform: scale(1.05); }
+
+    .toast-container {
+      position: fixed; bottom: 24px; right: 24px; z-index: 1000;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .toast {
+      padding: 14px 20px; border-radius: 12px; color: #fff;
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      animation: fadeUp 0.3s ease both; max-width: 320px;
+    }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      z-index: 900; display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(8px);
+    }
+    .modal-content {
+      border-radius: 24px; padding: 32px; max-width: 520px; width: 90%;
+      animation: scaleIn 0.3s ease both; max-height: 90%; overflow-y: auto;
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: #f1f5f9;
+    }
+
+    .spinner {
+      width: 40px; height: 40px; border: 3px solid rgba(139, 92, 246, 0.3);
+      border-top-color: #8b5cf6; border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto;
+    }
+
+    .input-field {
+      width: 100%; border-radius: 12px; padding: 10px 14px; font-size: 14px;
+      outline: none; color: #f1f5f9;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      transition: border-color 0.2s;
+    }
+    .input-field:focus { border-color: rgba(139, 92, 246, 0.7); }
+    .input-field::placeholder { color: rgba(241, 245, 249, 0.3); }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+      color: #fff; border-radius: 12px; padding: 10px 20px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: opacity 0.2s; border: none;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary {
+      background: rgba(139, 92, 246, 0.15); color: #c4b5fd;
+      border-radius: 12px; padding: 10px 20px;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.5); border-radius: 4px; }
+
+    label { display: block; font-size: 12px; font-weight: 600; color: rgba(196, 181, 253, 0.8); margin-bottom: 6px; }
+
+    .api-error {
+      background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 16px; padding: 24px; text-align: center; color: #fca5a5;
+    }
+  </style>
+</head>
+<body class="h-full">
+<div class="app-wrapper font-body" id="app">
+
+  <!-- TOAST -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modal" style="display:none;" onclick="if(event.target===this)closeModal()">
+    <div class="modal-content" id="modalContent"></div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="relative overflow-hidden">
+    <div class="absolute inset-0 opacity-5">
+      <svg width="100%" height="100%"><defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse"><circle cx="30" cy="30" r="2" fill="rgba(139,92,246,0.4)"/></pattern></defs><rect width="100%" height="100%" fill="url(#grid)"/></svg>
+    </div>
+    <div class="relative max-w-6xl mx-auto px-6 py-12">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div class="anim-fade-up">
+          <div class="flex items-center gap-4 mb-3">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center" style="background:linear-gradient(135deg,#8b5cf6,#7c3aed);">
+              <i data-lucide="book-marked" style="width:28px;height:28px;color:#fff;"></i>
+            </div>
+            <h1 class="font-display text-3xl md:text-4xl font-bold" style="color:#f1f5f9;">Sistema Biblioteca Inteligente</h1>
+          </div>
+          <p class="text-sm opacity-60" style="color:#cbd5e1;">Descubra seu próximo livro favorito</p>
+        </div>
+        <div class="flex items-center gap-6 anim-fade-up delay-1">
+          <div id="statsBar" class="flex flex-col sm:flex-row gap-4 text-sm" style="color:rgba(241,245,249,0.8);"></div>
+        </div>
+      </div>
+      <div class="mt-8 anim-fade-up delay-2">
+        <div class="relative max-w-2xl">
+          <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2" style="width:18px;height:18px;color:rgba(139,92,246,0.5);"></i>
+          <input type="text" id="searchInput" class="input-field pl-12" placeholder="Procura por título, autor ou classificação...">
+        </div>
+      </div>
+      <div class="mt-6 flex flex-wrap gap-2 anim-fade-up" id="genreFilters"></div>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="sticky top-0 z-50 border-b" style="background:rgba(15,23,42,0.85);border-color:rgba(139,92,246,0.2);backdrop-filter:blur(12px);">
+    <div class="max-w-6xl mx-auto px-6 flex gap-2 overflow-x-auto">
+      <button class="tab-btn py-3 px-4 text-sm font-medium whitespace-nowrap tab-active rounded-t-xl" data-tab="catalog">
+        <i data-lucide="grid-3x3" style="width:15px;height:15px;display:inline;vertical-align:-3px;margin-right:6px;"></i>Catálogo
+      </button>
+      <button class="tab-btn py-3 px-4 text-sm font-medium whitespace-nowrap rounded-t-xl" data-tab="add" style="color:rgba(241,245,249,0.5);">
+        <i data-lucide="plus-circle" style="width:15px;height:15px;display:inline;vertical-align:-3px;margin-right:6px;"></i>Cadastrar Livro
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="max-w-6xl mx-auto px-6 py-8" style="min-height:60%;color:#f1f5f9;">
+    <div id="tabCatalog"></div>
+    <div id="tabAdd" style="display:none;"></div>
+  </main>
+
+  <footer class="text-center py-8 text-xs opacity-40" style="color:#cbd5e1;">
+    ✨ Biblioteca Inteligente · Conectado à API FastAPI
+  </footer>
+</div>
+
+<script>
+// ==================== CONFIG ====================
+const API_URL = "http://127.0.0.1:8000";
+
+// ==================== STATE ====================
+let BOOKS = [];          // vem da API
+let currentTab = "catalog";
+let searchQuery = "";
+let selectedGenre = "";
+let isLoading = false;
+
+// ==================== HELPERS ====================
+function showToast(msg, type = "success") {
+  const c = document.getElementById("toastContainer");
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.style.background = type === "success" ? "#10b981" : type === "error" ? "#ef4444" : "#3b82f6";
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity 0.3s"; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
+}
+
+function getGenres() {
+  return [...new Set(BOOKS.map(b => b.classificacao).filter(Boolean))];
+}
+
+function getFilteredBooks() {
+  return BOOKS.filter(b => {
+    const q = searchQuery.toLowerCase();
+    const matchSearch = !q ||
+      (b.nome || "").toLowerCase().includes(q) ||
+      (b.autores || "").toLowerCase().includes(q) ||
+      (b.classificacao || "").toLowerCase().includes(q) ||
+      (b.editora || "").toLowerCase().includes(q);
+    const matchGenre = !selectedGenre || b.classificacao === selectedGenre;
+    return matchSearch && matchGenre;
+  });
+}
+
+const COVERS = ["📘","📕","📗","📙","📒","📔","📓","📚"];
+function getCover(id) {
+  return COVERS[id % COVERS.length];
+}
+
+// ==================== API CALLS ====================
+async function fetchLivros() {
+  try {
+    const res = await fetch(`${API_URL}/livros/`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    BOOKS = await res.json();
+    return true;
+  } catch (e) {
+    console.error("Erro ao buscar livros:", e);
+    return false;
+  }
+}
+
+async function deletarLivro(id) {
+  try {
+    const res = await fetch(`${API_URL}/livros/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return true;
+  } catch (e) {
+    console.error("Erro ao deletar:", e);
+    return false;
+  }
+}
+
+async function cadastrarLivro(dados) {
+  const params = new URLSearchParams(dados);
+  try {
+    const res = await fetch(`${API_URL}/livros/?${params}`, { method: "POST" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (e) {
+    console.error("Erro ao cadastrar:", e);
+    return null;
+  }
+}
+
+// ==================== RENDER ====================
+function updateStatsBar() {
+  const el = document.getElementById("statsBar");
+  const total = BOOKS.length;
+  const disponiveis = BOOKS.filter(b => b.emprestavel).length;
+  el.innerHTML = `
+    <span>📚 ${total} livros</span>
+    <span>✅ ${disponiveis} disponíveis</span>
+  `;
+}
+
+function renderGenreFilters() {
+  const el = document.getElementById("genreFilters");
+  const genres = getGenres();
+  el.innerHTML = `
+    <button class="genre-pill px-4 py-2 rounded-full text-xs font-medium"
+      ${!selectedGenre ? 'style="background:linear-gradient(90deg,#8b5cf6,#7c3aed);color:#fff;border-color:transparent;"' : 'style="background:transparent;color:rgba(241,245,249,0.6);"'}
+      onclick="filterGenre('')">Todos</button>
+    ${genres.map(g => `
+      <button class="genre-pill px-4 py-2 rounded-full text-xs font-medium"
+        ${selectedGenre === g ? 'style="background:linear-gradient(90deg,#8b5cf6,#7c3aed);color:#fff;border-color:transparent;"' : 'style="background:transparent;color:rgba(241,245,249,0.6);"'}
+        onclick="filterGenre('${g}')">${g}</button>
+    `).join("")}
+  `;
+}
+
+function filterGenre(g) {
+  selectedGenre = g;
+  renderGenreFilters();
+  renderCatalog();
+}
+
+function renderCatalog() {
+  const el = document.getElementById("tabCatalog");
+
+  if (isLoading) {
+    el.innerHTML = `<div class="py-24 text-center"><div class="spinner"></div><p class="mt-4 text-sm opacity-40">Carregando livros da API...</p></div>`;
+    return;
+  }
+
+  if (!BOOKS.length) {
+    el.innerHTML = `
+      <div class="api-error">
+        <i data-lucide="wifi-off" style="width:48px;height:48px;margin:0 auto 12px;display:block;color:#f87171;"></i>
+        <p class="font-semibold mb-1">Nenhum livro encontrado</p>
+        <p class="text-sm opacity-60">Verifique se a API está rodando em <code>http://127.0.0.1:8000</code></p>
+        <button onclick="recarregar()" class="btn-primary mt-4">🔄 Tentar novamente</button>
+      </div>`;
+    lucide.createIcons();
+    return;
+  }
+
+  const books = getFilteredBooks();
+
+  if (!books.length) {
+    el.innerHTML = `<div class="text-center py-16 opacity-50"><i data-lucide="search-x" style="width:48px;height:48px;margin:0 auto 12px;display:block;"></i><p>Nenhum livro encontrado para a busca</p></div>`;
+    lucide.createIcons();
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-display font-bold text-xl text-white">${books.length} livro${books.length !== 1 ? 's' : ''} encontrado${books.length !== 1 ? 's' : ''}</h2>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      ${books.map((b, i) => `
+        <div class="book-card rounded-2xl p-5 anim-fade-up" style="animation-delay:${i * 0.04}s;">
+          <div class="flex gap-4">
+            <div class="text-4xl flex-shrink-0 w-14 h-18 rounded-xl flex items-center justify-center"
+              style="background:linear-gradient(135deg,rgba(139,92,246,0.3),rgba(139,92,246,0.1));border:1px solid rgba(139,92,246,0.3);min-width:56px;height:68px;">
+              ${getCover(b.id_livro)}
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="font-display font-bold text-base leading-tight text-white">${b.nome || "Sem título"}</h3>
+              <p class="text-xs mt-1 opacity-50">${b.autores || "Autor desconhecido"} · ${b.ano || "—"}</p>
+              <div class="flex items-center gap-2 mt-2 flex-wrap">
+                ${b.classificacao ? `<span class="text-xs px-2 py-0.5 rounded-full" style="background:rgba(139,92,246,0.2);color:#c4b5fd;border:1px solid rgba(139,92,246,0.3);">${b.classificacao}</span>` : ''}
+                ${b.editora ? `<span class="text-xs opacity-40">${b.editora}</span>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 flex items-center justify-between pt-3" style="border-top:1px solid rgba(139,92,246,0.2);">
+            <div class="flex items-center gap-2">
+              <span class="text-xs px-2 py-1 rounded-lg font-medium" style="background:${b.emprestavel ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'};color:${b.emprestavel ? '#86efac' : '#fca5a5'};">
+                ${b.emprestavel ? '✅ Disponível' : '🔒 Indisponível'}
+              </span>
+              ${b.edicao ? `<span class="text-xs opacity-30">Ed. ${b.edicao}</span>` : ''}
+            </div>
+            <div class="flex gap-1">
+              <button onclick="verDetalhes(${b.id_livro})" class="p-2 rounded-lg" style="background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.3);" title="Ver detalhes">
+                <i data-lucide="info" style="width:14px;height:14px;color:#c4b5fd;"></i>
+              </button>
+              <button onclick="confirmarDelete(${b.id_livro},'${(b.nome||'').replace(/'/g,"\\'")}' )" class="p-2 rounded-lg" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);" title="Deletar">
+                <i data-lucide="trash-2" style="width:14px;height:14px;color:#fca5a5;"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+  lucide.createIcons();
+}
+
+function verDetalhes(id) {
+  const b = BOOKS.find(x => x.id_livro === id);
+  if (!b) return;
+  const modal = document.getElementById("modal");
+  document.getElementById("modalContent").innerHTML = `
+    <div class="flex gap-4 mb-6">
+      <div class="text-5xl">${getCover(b.id_livro)}</div>
+      <div>
+        <h2 class="font-display font-bold text-2xl text-white">${b.nome || "Sem título"}</h2>
+        <p class="text-sm opacity-50 mt-1">${b.autores || "—"} · ${b.ano || "—"}</p>
+        <p class="text-xs mt-1" style="color:#c4b5fd;">${b.editora || ""}</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 text-sm mb-6">
+      ${[
+        ["Edição", b.edicao],
+        ["Classificação", b.classificacao],
+        ["Localização", b.localizacao],
+        ["Disponível", b.emprestavel ? "Sim ✅" : "Não 🔒"],
+      ].map(([k,v]) => v ? `
+        <div class="rounded-xl p-3" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.2);">
+          <p class="text-xs opacity-40 mb-1">${k}</p>
+          <p class="font-medium text-white">${v}</p>
+        </div>
+      ` : '').join("")}
+    </div>
+    <div class="flex justify-end">
+      <button onclick="closeModal()" class="btn-secondary">Fechar</button>
+    </div>
+  `;
+  modal.style.display = "flex";
+}
+
+function confirmarDelete(id, nome) {
+  const modal = document.getElementById("modal");
+  document.getElementById("modalContent").innerHTML = `
+    <div class="text-center">
+      <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style="background:rgba(239,68,68,0.15);">
+        <i data-lucide="trash-2" style="width:28px;height:28px;color:#f87171;"></i>
+      </div>
+      <h3 class="font-display font-bold text-xl text-white mb-2">Remover livro?</h3>
+      <p class="text-sm opacity-60 mb-6">Deseja remover <strong style="color:#f1f5f9;">${nome}</strong> do sistema?</p>
+      <div class="flex gap-3 justify-center">
+        <button onclick="closeModal()" class="btn-secondary">Cancelar</button>
+        <button onclick="fazerDelete(${id})" class="btn-primary" style="background:linear-gradient(90deg,#ef4444,#dc2626);">Remover</button>
+      </div>
+    </div>
+  `;
+  modal.style.display = "flex";
+  lucide.createIcons();
+}
+
+async function fazerDelete(id) {
+  closeModal();
+  const ok = await deletarLivro(id);
+  if (ok) {
+    showToast("Livro removido com sucesso!");
+    await recarregar();
+  } else {
+    showToast("Erro ao remover livro", "error");
+  }
+}
+
+// ==================== CADASTRO ====================
+function renderAdd() {
+  const el = document.getElementById("tabAdd");
+  el.innerHTML = `
+    <div class="max-w-2xl mx-auto">
+      <div class="mb-8 anim-fade-up">
+        <h2 class="font-display font-bold text-2xl text-white">📖 Cadastrar Novo Livro</h2>
+        <p class="text-sm opacity-40 mt-1">Preencha os dados para adicionar à biblioteca</p>
+      </div>
+
+      <div class="rounded-2xl p-8 anim-scale-in" style="background:rgba(30,41,59,0.8);border:1px solid rgba(139,92,246,0.2);">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+          <div class="sm:col-span-2">
+            <label>Nome / Título *</label>
+            <input id="f_nome" type="text" class="input-field" placeholder="Ex: Dom Casmurro">
+          </div>
+
+          <div>
+            <label>Autores *</label>
+            <input id="f_autores" type="text" class="input-field" placeholder="Ex: Machado de Assis">
+          </div>
+
+          <div>
+            <label>Ano</label>
+            <input id="f_ano" type="number" class="input-field" placeholder="Ex: 1899" min="0" max="2099">
+          </div>
+
+          <div>
+            <label>Edição</label>
+            <input id="f_edicao" type="text" class="input-field" placeholder="Ex: 3ª edição">
+          </div>
+
+          <div>
+            <label>Editora</label>
+            <input id="f_editora" type="text" class="input-field" placeholder="Ex: Companhia das Letras">
+          </div>
+
+          <div>
+            <label>Classificação / Gênero</label>
+            <input id="f_classificacao" type="text" class="input-field" placeholder="Ex: Romance, Ficção...">
+          </div>
+
+          <div>
+            <label>Localização na Estante</label>
+            <input id="f_localizacao" type="text" class="input-field" placeholder="Ex: Seção A - Prateleira 2">
+          </div>
+
+          <div class="sm:col-span-2">
+            <label>Disponível para Empréstimo?</label>
+            <div class="flex gap-4 mt-2">
+              <label class="flex items-center gap-2 cursor-pointer" style="font-size:14px;color:#f1f5f9;font-weight:400;">
+                <input type="radio" name="f_emprestavel" value="true" checked style="accent-color:#8b5cf6;"> Sim
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer" style="font-size:14px;color:#f1f5f9;font-weight:400;">
+                <input type="radio" name="f_emprestavel" value="false" style="accent-color:#8b5cf6;"> Não
+              </label>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="flex gap-3 justify-end mt-8 pt-6" style="border-top:1px solid rgba(139,92,246,0.2);">
+          <button onclick="limparForm()" class="btn-secondary">Limpar</button>
+          <button onclick="submeterCadastro()" class="btn-primary">
+            <i data-lucide="plus" style="width:16px;height:16px;display:inline;vertical-align:-3px;margin-right:6px;"></i>
+            Cadastrar Livro
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  lucide.createIcons();
+}
+
+function limparForm() {
+  ["f_nome","f_autores","f_ano","f_edicao","f_editora","f_classificacao","f_localizacao"]
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
+  document.querySelector('input[name="f_emprestavel"][value="true"]').checked = true;
+}
+
+async function submeterCadastro() {
+  const nome = document.getElementById("f_nome").value.trim();
+  const autores = document.getElementById("f_autores").value.trim();
+
+  if (!nome || !autores) {
+    showToast("Nome e Autores são obrigatórios!", "error");
+    return;
+  }
+
+  const emprestavel = document.querySelector('input[name="f_emprestavel"]:checked').value === "true";
+  const ano = document.getElementById("f_ano").value;
+
+  const dados = {
+    nome,
+    autores,
+    emprestavel,
+    ...(ano ? { ano: parseInt(ano) } : {}),
+    edicao: document.getElementById("f_edicao").value.trim() || "1ª",
+    editora: document.getElementById("f_editora").value.trim() || "Desconhecida",
+    classificacao: document.getElementById("f_classificacao").value.trim() || "Geral",
+    localizacao: document.getElementById("f_localizacao").value.trim() || "A definir",
+  };
+
+  const btn = document.querySelector('#tabAdd .btn-primary');
+  btn.textContent = "Cadastrando...";
+  btn.disabled = true;
+
+  const result = await cadastrarLivro(dados);
+
+  btn.innerHTML = `<i data-lucide="plus" style="width:16px;height:16px;display:inline;vertical-align:-3px;margin-right:6px;"></i>Cadastrar Livro`;
+  btn.disabled = false;
+  lucide.createIcons();
+
+  if (result) {
+    showToast(`"${nome}" cadastrado com sucesso! 📚`);
+    limparForm();
+    await recarregar();
+  } else {
+    showToast("Erro ao cadastrar livro. Verifique a API.", "error");
+  }
+}
+
+// ==================== TABS ====================
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    currentTab = btn.dataset.tab;
+    document.querySelectorAll(".tab-btn").forEach(b => {
+      b.classList.remove("tab-active");
+      b.style.color = "rgba(241,245,249,0.5)";
+      b.style.background = "transparent";
+    });
+    btn.classList.add("tab-active");
+    btn.style.color = "#fff";
+
+    document.getElementById("tabCatalog").style.display = currentTab === "catalog" ? "" : "none";
+    document.getElementById("tabAdd").style.display = currentTab === "add" ? "" : "none";
+
+    if (currentTab === "catalog") renderCatalog();
+    else if (currentTab === "add") renderAdd();
+  });
+});
+
+// ==================== SEARCH ====================
+document.getElementById("searchInput").addEventListener("input", (e) => {
+  searchQuery = e.target.value;
+  if (currentTab === "catalog") renderCatalog();
+});
+
+// ==================== INIT ====================
+async function recarregar() {
+  isLoading = true;
+  renderCatalog();
+  const ok = await fetchLivros();
+  isLoading = false;
+  if (!ok) {
+    showToast("Erro ao conectar com a API", "error");
+  }
+  renderGenreFilters();
+  updateStatsBar();
+  renderCatalog();
+}
+
+(async () => {
+  lucide.createIcons();
+  await recarregar();
+})();
+</script>
+</body>
+</html>
