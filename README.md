@@ -1,6 +1,4 @@
-
-# projeto acadêmico responsável pelo projeto israel soares  acadêmico de Ciencias e tecnologia na Instituição de Ensino  Unifeso 
-# problema 
+# projeto acadêmico ainda em manutenção :(
 Bibliotecas precisam ser  controladas 
 
 usuários
