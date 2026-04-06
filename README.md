@@ -1,5 +1,10 @@
-# projeto acadêmico ainda em manutenção :(
-Bibliotecas precisam ser  controladas 
+🏛️ Sistema de Biblioteca Inteligente
+Projeto desenvolvido em Java utilizando arquitetura BCE (Boundary-Control-Entity).
+
+## 🛠️ Tecnologias
+- Java
+- Swing (Interface Gráfica)
+- NetBeans 
 
 usuários
 
