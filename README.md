@@ -65,3 +65,7 @@ Criar livros
 Ler (listar)
 Atualizar (disponibilidade)
 Deletar
+
+## Meus projetos
+
+- [Sistema de Biblioteca Inteligente](https://github.com/Israelsoaresdasilva/sistema-biblioteca-inteligente)
